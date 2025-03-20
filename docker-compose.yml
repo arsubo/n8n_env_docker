@@ -1,0 +1,64 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  n8n:
+    image: n8nio/n8n:latest
+    restart: always
+    environment:
+      - N8N_HOST=${N8N_HOST}
+      - N8N_PORT=${N8N_PORT}
+      - N8N_PROTOCOL=${N8N_PROTOCOL}
+      - WEBHOOK_URL=${WEBHOOK_URL}
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
+      - VUE_APP_URL_BASE_API=${VUE_APP_URL_BASE_API}
+      - WEBHOOK_TUNNEL_URL=${WEBHOOK_TUNNEL_URL}
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
+      - DB_POSTGRESDB_USER=${POSTGRES_USER}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      - EXECUTIONS_PROCESS=${EXECUTIONS_PROCESS}
+      - EXECUTIONS_DATA_SAVE_ON_ERROR=${EXECUTIONS_DATA_SAVE_ON_ERROR}
+      - EXECUTIONS_DATA_SAVE_ON_SUCCESS=${EXECUTIONS_DATA_SAVE_ON_SUCCESS}
+      - EXECUTIONS_DATA_PRUNE=${EXECUTIONS_DATA_PRUNE}
+      - EXECUTIONS_DATA_MAX_AGE=${EXECUTIONS_DATA_MAX_AGE}
+    ports:
+      - "5678:5678"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+  nginx:
+    image: nginx:latest
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/nginx.conf:ro
+      - ./certs:/etc/nginx/certs
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - n8n
+
+volumes:
+  db_data:
+  n8n_data:
