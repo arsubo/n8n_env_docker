@@ -1,65 +1,81 @@
-# Configuración de n8n con PostgreSQL, NGINX y Let's Encrypt
+n8n Deployment Guide | Guía de Despliegue de n8n
+================================================
 
-Este documento detalla los pasos para configurar **n8n** con **PostgreSQL**, utilizando **NGINX** como **Reverse Proxy** y **Let's Encrypt** para certificados SSL en un servidor basado en Docker Compose.
+Choose your language / Selecciona tu idioma:
 
----
+-   [English version](https://www.google.com/search?q=%23english "null")
 
-## 1️⃣ **Preparar el servidor**
+-   [Versión en Español](https://www.google.com/search?q=%23espa%C3%B1ol "null")
 
-### 1.1 **Actualizar el sistema**
-```bash
+<a name="english"></a>
+
+🇺🇸 n8n Setup with PostgreSQL, NGINX and Let's Encrypt
+=======================================================
+
+This document details the steps to configure **n8n** with **PostgreSQL**, using **NGINX** as a **Reverse Proxy** and **Let's Encrypt** for SSL certificates on a Docker Compose-based server.
+
+1️⃣ Prepare the Server
+----------------------
+
+### 1.1 Update the system
+
+```
 sudo apt update && sudo apt upgrade -y
+
 ```
 
-### 1.2 **Instalar dependencias**
-```bash
+### 1.2 Install dependencies
+
+```
 sudo apt install -y docker.io docker-compose certbot python3-certbot-nginx
+
 ```
 
-### 1.3 **Configurar el Firewall**
-```bash
+### 1.3 Configure the Firewall
+
+```
 sudo ufw allow OpenSSH
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
 sudo ufw enable
+
 ```
 
----
+2️⃣ Configure the Working Environment
+-------------------------------------
 
-## 2️⃣ **Configurar el entorno de trabajo**
+### 2.1 Create working directory
 
-### 2.1 **Crear directorio de trabajo**
-```bash
+```
 mkdir -p ~/n8n-compose && cd ~/n8n-compose
+
 ```
 
-### 2.2 **Crear el archivo `.env` con las variables de entorno**
-```bash
+### 2.2 Create the `.env` file with environment variables
+
+```
 touch .env
 nano .env
+
 ```
 
-Ejemplo de contenido: ver archivo tmp.env y cambiar valores renombrando archivo como .env
-```ini
+Example content (rename your file from `tmp.env` to `.env` and change values):
+
+```
 N8N_PORT=5678
 DB_POSTGRESDB_HOST=postgres
 DB_POSTGRESDB_DATABASE=n8n_db
 DB_POSTGRESDB_USER=n8n_user
 DB_POSTGRESDB_PASSWORD=super_secure_password
+
 ```
 
----
+3️⃣ Configure Docker Compose
+----------------------------
 
-## 3️⃣ **Configurar Docker Compose**
+### 3.1 Create `docker-compose.yml`
 
-### 3.1 **Crear `docker-compose.yml`**
-```bash
-touch docker-compose.yml
-nano docker-compose.yml
 ```
-
-Ejemplo de contenido:
-```yaml
 version: '3.8'
 
 services:
@@ -115,20 +131,23 @@ volumes:
 networks:
   n8n-network:
     driver: bridge
+
 ```
 
----
+4️⃣ Configure NGINX
+-------------------
 
-## 4️⃣ **Configurar NGINX**
+### 4.1 Create the `nginx.conf` configuration file
 
-### 4.1 **Crear archivo de configuración `nginx.conf`**
-```bash
+```
 touch nginx.conf
 nano nginx.conf
+
 ```
 
-Ejemplo de configuración:
-```nginx
+Configuration example (replace `n8n.example.com` with your domain):
+
+```
 server {
     listen 80;
     server_name n8n.example.com;
@@ -140,15 +159,14 @@ server {
     }
 }
 
-  # Aumentar el tamaño máximo de archivos permitidos en n8n
-    client_max_body_size 128M;
+client_max_body_size 128M;
 
 server {
     listen 443 ssl http2;
     server_name n8n.example.com;
 
-    ssl_certificate /etc/letsencrypt/live/n8n.example.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/n8n.example.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/[n8n.example.com/fullchain.pem](https://n8n.example.com/fullchain.pem);
+    ssl_certificate_key /etc/letsencrypt/live/[n8n.example.com/privkey.pem](https://n8n.example.com/privkey.pem);
     include /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
@@ -161,63 +179,121 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
+
 ```
 
----
+5️⃣ Obtain SSL Certificates with Let's Encrypt
+----------------------------------------------
 
-## 5️⃣ **Obtener certificados SSL con Let's Encrypt**
+### 5.1 Stop NGINX if it's running
 
-### 5.1 **Detener NGINX si está corriendo**
-```bash
+```
 docker stop n8n-compose-nginx-1
+
 ```
 
-### 5.2 **Generar los certificados SSL**
-```bash
+### 5.2 Generate SSL certificates
+
+```
 sudo certbot certonly --standalone -d n8n.example.com
+
 ```
 
-### 5.3 **Verificar la renovación automática**
-```bash
-sudo certbot renew --dry-run
+6️⃣ Start the Services
+----------------------
+
 ```
-
----
-
-## 6️⃣ **Levantar los servicios**
-```bash
 docker compose up -d
+
 ```
 
-Verifica que los contenedores estén corriendo:
-```bash
-docker ps
+✅ **If everything is correct, access at:** `https://n8n.example.com`
+
+[Back to top / Volver arriba](https://www.google.com/search?q=%23english "null")
+
+<a name="español"></a>
+
+🇲🇽 Configuración de n8n con PostgreSQL, NGINX y Let's Encrypt
+===============================================================
+
+Este documento detalla los pasos para configurar **n8n** con **PostgreSQL**, utilizando **NGINX** como **Reverse Proxy** y **Let's Encrypt** para certificados SSL en un servidor basado en Docker Compose.
+
+1️⃣ Preparar el servidor
+------------------------
+
+### 1.1 Actualizar el sistema
+
+```
+sudo apt update && sudo apt upgrade -y
+
 ```
 
----
+### 1.2 Instalar dependencias
 
-## 7️⃣ **Verificar NGINX y n8n**
+```
+sudo apt install -y docker.io docker-compose certbot python3-certbot-nginx
 
-### 7.1 **Verificar logs de NGINX**
-```bash
-docker logs -f n8n-compose-nginx-1
 ```
 
-### 7.2 **Verificar acceso a n8n desde NGINX**
-```bash
-docker exec -it n8n-compose-nginx-1 curl -I http://n8n:5678
+2️⃣ Configurar el entorno de trabajo
+------------------------------------
+
+### 2.1 Crear directorio de trabajo
+
+```
+mkdir -p ~/n8n-compose && cd ~/n8n-compose
+
 ```
 
-✅ **Si todo está bien, accede a:**
-```plaintext
-https://n8n.example.com
+### 2.2 Crear el archivo `.env`
+
+```
+touch .env && nano .env
+
 ```
 
----
+Ejemplo de contenido:
 
-## 🎯 **Conclusión**
-Este setup te permite correr **n8n** con **PostgreSQL** detrás de un **NGINX Reverse Proxy** con **SSL/TLS** habilitado mediante **Let's Encrypt**. 🚀
+```
+N8N_PORT=5678
+DB_POSTGRESDB_HOST=postgres
+DB_POSTGRESDB_DATABASE=n8n_db
+DB_POSTGRESDB_USER=n8n_user
+DB_POSTGRESDB_PASSWORD=super_secure_password
 
-Si hay problemas, revisa los logs:
-```bash
-docker logs -f n8n-compose-nginx-1
+```
+
+3️⃣ Configurar Docker Compose
+-----------------------------
+
+*(Usa el archivo YAML detallado en la sección superior).*
+
+4️⃣ Configurar NGINX
+--------------------
+
+*(Usa el archivo `nginx.conf` detallado en la sección superior, reemplazando tu dominio real).*
+
+5️⃣ Obtener certificados SSL
+----------------------------
+
+```
+sudo certbot certonly --standalone -d n8n.example.com
+
+```
+
+6️⃣ Levantar los servicios
+--------------------------
+
+```
+docker compose up -d
+
+```
+
+✅ **Acceso:** `https://n8n.example.com`
+
+🎯 Conclusión
+-------------
+
+Este setup permite correr **n8n** de forma segura y profesional con persistencia de datos en PostgreSQL.
+
+[Volver arriba](https://www.google.com/search?q=%23english "null")
